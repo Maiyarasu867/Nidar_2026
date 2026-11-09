@@ -28,7 +28,7 @@ export async function GET() {
   try {
     const db = getDb();
     const members = db.prepare(`
-      SELECT id, name, role, created_at, last_active_at,
+      SELECT id, username, name, role, created_at, last_active_at,
              (SELECT COUNT(*) FROM progress_logs WHERE member_id = members.id) as log_count
       FROM members 
       ORDER BY last_active_at DESC
@@ -44,7 +44,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { action, name, role, passcode, memberId } = body;
+    const { action, username, name, role, passcode, memberId } = body;
     const db = getDb();
 
     if (action === 'register') {
@@ -56,6 +56,16 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      const rawUsername = (username || '').trim();
+      const cleanUsername = rawUsername.toLowerCase().replace(/[^a-z0-9_.-]/g, '');
+
+      if (!cleanUsername || cleanUsername.length < 2) {
+        return NextResponse.json(
+          { error: 'Please choose a valid username (at least 2 letters, numbers, _ or -).' },
+          { status: 400 }
+        );
+      }
+
       if (!name || !name.trim()) {
         return NextResponse.json({ error: 'Please enter your name.' }, { status: 400 });
       }
@@ -64,34 +74,49 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Please enter your project role.' }, { status: 400 });
       }
 
+      // Check if username is already taken
+      const existing = db.prepare('SELECT id FROM members WHERE LOWER(username) = ? OR LOWER(id) = ?').get(cleanUsername, cleanUsername);
+      if (existing) {
+        return NextResponse.json(
+          { error: `Username "@${cleanUsername}" is already taken. Please choose another username.` },
+          { status: 409 }
+        );
+      }
+
       const id = generateMemberId(db);
       db.prepare(`
-        INSERT INTO members (id, name, role, created_at, last_active_at)
-        VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      `).run(id, name.trim(), role.trim());
+        INSERT INTO members (id, username, name, role, created_at, last_active_at)
+        VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      `).run(id, cleanUsername, name.trim(), role.trim());
 
-      const member = db.prepare('SELECT id, name, role, created_at, last_active_at FROM members WHERE id = ?').get(id);
+      const member = db.prepare('SELECT id, username, name, role, created_at, last_active_at FROM members WHERE id = ?').get(id);
       return NextResponse.json({ success: true, member });
     }
 
     if (action === 'login') {
-      if (!memberId || !memberId.trim()) {
-        return NextResponse.json({ error: 'Please provide your Member ID.' }, { status: 400 });
+      const loginInput = (username || memberId || '').trim();
+      if (!loginInput) {
+        return NextResponse.json({ error: 'Please enter your username.' }, { status: 400 });
       }
 
-      const cleanId = memberId.trim().toUpperCase();
-      const member = db.prepare('SELECT id, name, role, created_at, last_active_at FROM members WHERE id = ?').get(cleanId);
+      const cleanInput = loginInput.toLowerCase();
+      // Match by username (case-insensitive), or ID, or full name
+      const member = db.prepare(`
+        SELECT id, username, name, role, created_at, last_active_at 
+        FROM members 
+        WHERE LOWER(username) = ? OR LOWER(id) = ? OR LOWER(name) = ?
+      `).get(cleanInput, cleanInput, cleanInput);
 
       if (!member) {
         return NextResponse.json(
-          { error: `Member ID "${cleanId}" not found. If this is your first time, choose "New Member".` },
+          { error: `User "${loginInput}" not found. If this is your first time, switch to "New Member" to register.` },
           { status: 404 }
         );
       }
 
       // Update last active
-      db.prepare('UPDATE members SET last_active_at = CURRENT_TIMESTAMP WHERE id = ?').run(cleanId);
-      const updatedMember = db.prepare('SELECT id, name, role, created_at, last_active_at FROM members WHERE id = ?').get(cleanId);
+      db.prepare('UPDATE members SET last_active_at = CURRENT_TIMESTAMP WHERE id = ?').run(member.id);
+      const updatedMember = db.prepare('SELECT id, username, name, role, created_at, last_active_at FROM members WHERE id = ?').get(member.id);
 
       return NextResponse.json({ success: true, member: updatedMember });
     }

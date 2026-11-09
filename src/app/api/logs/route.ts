@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
 
     let query = `
       SELECT l.id, l.member_id, l.content, l.blockers, l.category, l.created_at, l.updated_at,
-             m.name as member_name, m.role as member_role
+             m.name as member_name, m.role as member_role, m.username as member_username
       FROM progress_logs l
       JOIN members m ON l.member_id = m.id
       WHERE 1=1
@@ -158,6 +158,7 @@ export async function POST(req: NextRequest) {
     const createdLog = {
       id: logId,
       member_id: member.id,
+      member_username: member.username,
       member_name: member.name,
       member_role: member.role,
       content,

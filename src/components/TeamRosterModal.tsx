@@ -56,7 +56,7 @@ export function TeamRosterModal({ isOpen, members, onClose }: TeamRosterModalPro
                           {m.name}
                         </span>
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-300 font-mono flex-shrink-0">
-                          {m.id}
+                          {m.username ? `@${m.username}` : m.id}
                         </span>
                       </div>
                       <span className="text-xs text-neutral-400 block truncate mt-0.5">{m.role}</span>

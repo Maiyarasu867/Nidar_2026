@@ -51,7 +51,8 @@ export function LogFeed({
         !searchQuery.trim() ||
         log.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (log.blockers && log.blockers.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        log.member_name.toLowerCase().includes(searchQuery.toLowerCase());
+        log.member_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (log.member_username && log.member_username.toLowerCase().includes(searchQuery.toLowerCase()));
       return matchMember && matchCategory && matchSearch;
     });
   }, [logs, selectedMember, selectedCategory, searchQuery]);
@@ -225,7 +226,7 @@ export function LogFeed({
                               {log.member_role}
                             </span>
                             <span className="text-[10px] text-neutral-500 font-mono hidden sm:inline">
-                              {log.member_id}
+                              {log.member_username ? `@${log.member_username}` : log.member_id}
                             </span>
                           </div>
                           <span className="text-[11px] text-neutral-400 block mt-0.5">

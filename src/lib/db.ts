@@ -7,6 +7,7 @@ const { DatabaseSync } = nodeRequire('node:sqlite');
 
 export interface Member {
   id: string;
+  username?: string;
   name: string;
   role: string;
   created_at: string;
@@ -34,6 +35,7 @@ export interface Reaction {
 export interface ProgressLog {
   id: number;
   member_id: string;
+  member_username?: string;
   member_name: string;
   member_role: string;
   content: string;
@@ -112,6 +114,7 @@ export function getDb() {
   db.exec(`
     CREATE TABLE IF NOT EXISTS members (
       id TEXT PRIMARY KEY,
+      username TEXT UNIQUE,
       name TEXT NOT NULL,
       role TEXT NOT NULL,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -182,6 +185,20 @@ export function getDb() {
     db.exec(`ALTER TABLE checklists ADD COLUMN is_personal INTEGER DEFAULT 0;`);
   } catch (e) {
     // Column already exists, ignore
+  }
+
+  // Run migration safely to add username to members
+  try {
+    db.exec(`ALTER TABLE members ADD COLUMN username TEXT;`);
+  } catch (e) {
+    // Column already exists, ignore
+  }
+
+  // Populate username for any existing legacy members
+  try {
+    db.exec(`UPDATE members SET username = LOWER(REPLACE(name, ' ', '')) WHERE username IS NULL OR username = '';`);
+  } catch (e) {
+    // Ignore
   }
 
   dbInstance = db;

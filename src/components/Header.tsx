@@ -97,7 +97,7 @@ export function Header({
                 {currentMember.name}
               </span>
               <span className="font-mono text-neutral-400 text-[10px] bg-neutral-800 px-1 py-0.2 rounded hidden xs:inline">
-                {currentMember.id}
+                {currentMember.username ? `@${currentMember.username}` : currentMember.id}
               </span>
             </div>
 

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Member } from '@/lib/db';
-import { CopyIcon, CheckIcon, AlertCircleIcon, UserIcon } from './Icons';
+import { CheckIcon, AlertCircleIcon, UserIcon } from './Icons';
 
 interface AuthModalProps {
   onSuccess: (member: Member) => void;
@@ -10,18 +10,18 @@ interface AuthModalProps {
 
 export function AuthModal({ onSuccess }: AuthModalProps) {
   const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [memberId, setMemberId] = useState('');
+  const [username, setUsername] = useState('');
+  const [regUsername, setRegUsername] = useState('');
   const [name, setName] = useState('');
   const [role, setRole] = useState('');
   const [passcode, setPasscode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [newlyCreatedMember, setNewlyCreatedMember] = useState<Member | null>(null);
-  const [copied, setCopied] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!memberId.trim()) return;
+    if (!username.trim()) return;
 
     setError(null);
     setLoading(true);
@@ -30,7 +30,7 @@ export function AuthModal({ onSuccess }: AuthModalProps) {
       const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'login', memberId: memberId.trim() }),
+        body: JSON.stringify({ action: 'login', username: username.trim() }),
       });
       const data = await res.json();
 
@@ -49,7 +49,7 @@ export function AuthModal({ onSuccess }: AuthModalProps) {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !role.trim() || !passcode.trim()) {
+    if (!regUsername.trim() || !name.trim() || !role.trim() || !passcode.trim()) {
       setError('Please fill in all fields.');
       return;
     }
@@ -63,6 +63,7 @@ export function AuthModal({ onSuccess }: AuthModalProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'register',
+          username: regUsername.trim(),
           name: name.trim(),
           role: role.trim(),
           passcode: passcode.trim(),
@@ -82,14 +83,7 @@ export function AuthModal({ onSuccess }: AuthModalProps) {
     }
   };
 
-  const handleCopyId = () => {
-    if (!newlyCreatedMember) return;
-    navigator.clipboard.writeText(newlyCreatedMember.id);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleProceedWithNewId = () => {
+  const handleProceedWithNewAccount = () => {
     if (!newlyCreatedMember) return;
     localStorage.setItem('nidar_member', JSON.stringify(newlyCreatedMember));
     onSuccess(newlyCreatedMember);
@@ -108,36 +102,30 @@ export function AuthModal({ onSuccess }: AuthModalProps) {
           <p className="text-xs sm:text-sm text-neutral-400 mt-1">Closed Team Progress & Activity Tracker</p>
         </div>
 
-        {/* If newly registered, show ID confirmation step */}
+        {/* If newly registered, show friendly confirmation */}
         {newlyCreatedMember ? (
           <div className="text-center space-y-4">
             <div className="p-4 bg-emerald-950/40 border border-emerald-500/30 rounded-xl">
-              <span className="text-emerald-400 text-xs font-semibold uppercase tracking-wider">Registration Successful!</span>
-              <p className="text-sm text-neutral-300 mt-1">Here is your unique Project Member ID:</p>
+              <span className="text-emerald-400 text-xs font-semibold uppercase tracking-wider">
+                Registration Successful!
+              </span>
+              <p className="text-sm text-neutral-300 mt-1">Welcome to NIDAR, {newlyCreatedMember.name}!</p>
               
-              <div className="flex items-center justify-center space-x-3 my-3">
-                <span className="text-2xl sm:text-3xl font-mono font-bold text-white bg-neutral-950 px-4 py-2 rounded-lg border border-neutral-700 tracking-wider">
-                  {newlyCreatedMember.id}
+              <div className="my-3">
+                <span className="inline-block text-xl sm:text-2xl font-mono font-bold text-white bg-neutral-950 px-4 py-2 rounded-lg border border-neutral-700 tracking-wide">
+                  @{newlyCreatedMember.username || newlyCreatedMember.name}
                 </span>
-                <button
-                  type="button"
-                  onClick={handleCopyId}
-                  className="p-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 rounded-lg border border-neutral-700 transition"
-                  title="Copy ID"
-                >
-                  {copied ? <CheckIcon className="w-5 h-5 text-emerald-400" /> : <CopyIcon className="w-5 h-5" />}
-                </button>
               </div>
 
               <p className="text-xs text-neutral-400">
-                Keep this ID safe! Next time, you just enter <span className="font-mono text-neutral-200">{newlyCreatedMember.id}</span> to log in instantly.
+                You can now log in anytime simply by typing your username <span className="font-semibold text-neutral-200">@{newlyCreatedMember.username}</span>.
               </p>
             </div>
 
             <button
               type="button"
-              onClick={handleProceedWithNewId}
-              className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl transition shadow-lg shadow-blue-600/20"
+              onClick={handleProceedWithNewAccount}
+              className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl transition shadow-lg shadow-blue-600/20 text-sm"
             >
               Enter Project Hub →
             </button>
@@ -176,21 +164,24 @@ export function AuthModal({ onSuccess }: AuthModalProps) {
             {mode === 'login' ? (
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
-                  <label htmlFor="memberId" className="block text-xs font-medium text-neutral-300 mb-1.5">
-                    Your Member ID
+                  <label htmlFor="loginUsername" className="block text-xs font-medium text-neutral-300 mb-1.5">
+                    Your Username
                   </label>
-                  <input
-                    id="memberId"
-                    type="text"
-                    value={memberId}
-                    onChange={(e) => setMemberId(e.target.value)}
-                    placeholder="e.g. NDR-104"
-                    autoFocus
-                    required
-                    className="w-full px-3.5 py-2.5 bg-neutral-950 border border-neutral-800 rounded-xl text-white font-mono placeholder:font-sans placeholder:text-neutral-600 focus:outline-none focus:border-blue-500 transition text-sm uppercase"
-                  />
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500 text-sm font-mono">@</span>
+                    <input
+                      id="loginUsername"
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="e.g. maiyarasu"
+                      autoFocus
+                      required
+                      className="w-full pl-8 pr-3.5 py-2.5 bg-neutral-950 border border-neutral-800 rounded-xl text-white placeholder:text-neutral-600 focus:outline-none focus:border-blue-500 transition text-sm lowercase"
+                    />
+                  </div>
                   <p className="text-[11px] text-neutral-500 mt-1.5">
-                    No password required. Just your assigned member ID.
+                    Enter the username you registered with. No password needed.
                   </p>
                 </div>
 
@@ -199,7 +190,7 @@ export function AuthModal({ onSuccess }: AuthModalProps) {
                   disabled={loading}
                   className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-medium rounded-xl transition shadow-lg shadow-blue-600/20 text-sm"
                 >
-                  {loading ? 'Checking ID...' : 'Enter Hub'}
+                  {loading ? 'Signing In...' : 'Enter Hub'}
                 </button>
 
                 <div className="text-center pt-2">
@@ -208,22 +199,41 @@ export function AuthModal({ onSuccess }: AuthModalProps) {
                     onClick={() => { setMode('register'); setError(null); }}
                     className="text-xs text-neutral-400 hover:text-blue-400 transition"
                   >
-                    First time here? <span className="underline">Get an ID</span>
+                    First time here? <span className="underline">Register username</span>
                   </button>
                 </div>
               </form>
             ) : (
               <form onSubmit={handleRegister} className="space-y-3.5">
                 <div>
+                  <label htmlFor="regUsername" className="block text-xs font-medium text-neutral-300 mb-1">
+                    Choose Username *
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500 text-sm font-mono">@</span>
+                    <input
+                      id="regUsername"
+                      type="text"
+                      value={regUsername}
+                      onChange={(e) => setRegUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_.-]/g, ''))}
+                      placeholder="e.g. maiyarasu"
+                      required
+                      className="w-full pl-8 pr-3.5 py-2 bg-neutral-950 border border-neutral-800 rounded-xl text-white placeholder:text-neutral-600 focus:outline-none focus:border-blue-500 transition text-sm font-mono lowercase"
+                    />
+                  </div>
+                  <p className="text-[10px] text-neutral-500 mt-1">This will be your personal login handle.</p>
+                </div>
+
+                <div>
                   <label htmlFor="regName" className="block text-xs font-medium text-neutral-300 mb-1">
-                    Your Name
+                    Your Full Name *
                   </label>
                   <input
                     id="regName"
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Rahul Sharma"
+                    placeholder="e.g. Maiyarasu S"
                     required
                     className="w-full px-3.5 py-2 bg-neutral-950 border border-neutral-800 rounded-xl text-white placeholder:text-neutral-600 focus:outline-none focus:border-blue-500 transition text-sm"
                   />
@@ -231,14 +241,14 @@ export function AuthModal({ onSuccess }: AuthModalProps) {
 
                 <div>
                   <label htmlFor="regRole" className="block text-xs font-medium text-neutral-300 mb-1">
-                    Project Role
+                    Project Role *
                   </label>
                   <input
                     id="regRole"
                     type="text"
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
-                    placeholder="e.g. Frontend Lead, Hardware, ML, QA"
+                    placeholder="e.g. Team Lead, Hardware, ML, QA"
                     required
                     className="w-full px-3.5 py-2 bg-neutral-950 border border-neutral-800 rounded-xl text-white placeholder:text-neutral-600 focus:outline-none focus:border-blue-500 transition text-sm"
                   />
@@ -246,7 +256,7 @@ export function AuthModal({ onSuccess }: AuthModalProps) {
 
                 <div>
                   <label htmlFor="regPasscode" className="block text-xs font-medium text-neutral-300 mb-1">
-                    Project Access Key
+                    Project Access Key *
                   </label>
                   <input
                     id="regPasscode"
@@ -257,7 +267,7 @@ export function AuthModal({ onSuccess }: AuthModalProps) {
                     required
                     className="w-full px-3.5 py-2 bg-neutral-950 border border-neutral-800 rounded-xl text-white placeholder:text-neutral-600 focus:outline-none focus:border-blue-500 transition text-sm"
                   />
-                  <p className="text-[11px] text-neutral-500 mt-1">
+                  <p className="text-[10px] text-neutral-500 mt-1">
                     Secures the website so only our project members can join.
                   </p>
                 </div>
@@ -267,7 +277,7 @@ export function AuthModal({ onSuccess }: AuthModalProps) {
                   disabled={loading}
                   className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-medium rounded-xl transition shadow-lg shadow-emerald-600/20 text-sm mt-2"
                 >
-                  {loading ? 'Creating Member ID...' : 'Generate My ID'}
+                  {loading ? 'Creating Member...' : 'Join Team Hub'}
                 </button>
               </form>
             )}
