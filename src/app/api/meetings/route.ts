@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { queryAll, queryOne, execute } from '@/lib/db';
 
 export async function GET() {
   try {
-    const db = getDb();
-    const meetings = db.prepare(`
+    const meetings = await queryAll(`
       SELECT mt.id, mt.title, mt.agenda, mt.scheduled_at, mt.duration_minutes,
              mt.meeting_url, mt.created_by, mt.created_at,
              m.name as created_by_name
       FROM meetings mt
       JOIN members m ON mt.created_by = m.id
       ORDER BY mt.scheduled_at ASC
-    `).all();
+    `);
 
     return NextResponse.json({ meetings });
   } catch (error: any) {
@@ -37,36 +36,34 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Member ID required' }, { status: 400 });
     }
 
-    const cleanMemberId = memberId.trim().toUpperCase();
-    const db = getDb();
+    const cleanMemberId = memberId.trim();
 
-    const member = db.prepare('SELECT id, name FROM members WHERE id = ?').get(cleanMemberId);
+    const member = await queryOne('SELECT id, name FROM members WHERE id = ?', [cleanMemberId]);
     if (!member) {
       return NextResponse.json({ error: 'Member not found' }, { status: 404 });
     }
 
-    const insert = db.prepare(`
+    const res = await execute(`
       INSERT INTO meetings (title, agenda, scheduled_at, duration_minutes, meeting_url, created_by, created_at)
       VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-    `);
-    const res = insert.run(
+    `, [
       title.trim(),
       agenda ? agenda.trim() : null,
       scheduled_at,
       Number(duration_minutes) || 30,
       meeting_url ? meeting_url.trim() : null,
       cleanMemberId
-    );
+    ]);
 
-    const newId = Number(res.lastInsertRowid);
-    const meeting = db.prepare(`
+    const newId = res.lastInsertRowid;
+    const meeting = await queryOne(`
       SELECT mt.id, mt.title, mt.agenda, mt.scheduled_at, mt.duration_minutes,
              mt.meeting_url, mt.created_by, mt.created_at,
              m.name as created_by_name
       FROM meetings mt
       JOIN members m ON mt.created_by = m.id
       WHERE mt.id = ?
-    `).get(newId);
+    `, [newId]);
 
     return NextResponse.json({ success: true, meeting });
   } catch (error: any) {
@@ -84,8 +81,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Meeting ID required' }, { status: 400 });
     }
 
-    const db = getDb();
-    db.prepare('DELETE FROM meetings WHERE id = ?').run(id);
+    await execute('DELETE FROM meetings WHERE id = ?', [id]);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

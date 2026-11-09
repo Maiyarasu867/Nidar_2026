@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { queryAll, queryOne, execute } from '@/lib/db';
 
 export async function GET(req: NextRequest) {
   try {
-    const db = getDb();
     const { searchParams } = new URL(req.url);
-    const memberId = (searchParams.get('memberId') || '').trim().toUpperCase();
+    const memberId = (searchParams.get('memberId') || '').trim();
 
     let query = `
       SELECT c.id, c.title, c.category, c.is_completed, c.is_personal, c.created_by, c.completed_by,
@@ -29,7 +28,7 @@ export async function GET(req: NextRequest) {
 
     query += ` ORDER BY c.is_completed ASC, c.created_at DESC`;
 
-    const items = db.prepare(query).all(...params);
+    const items = await queryAll(query, params);
     return NextResponse.json({ items });
   } catch (error: any) {
     console.error('Checklist GET error:', error);
@@ -50,30 +49,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Member ID required' }, { status: 400 });
     }
 
-    const cleanMemberId = memberId.trim().toUpperCase();
+    const cleanMemberId = memberId.trim();
     const isPersonalInt = is_personal ? 1 : 0;
-    const db = getDb();
 
-    const member = db.prepare('SELECT id, name FROM members WHERE id = ?').get(cleanMemberId);
+    const member = await queryOne('SELECT id, name FROM members WHERE id = ?', [cleanMemberId]);
     if (!member) {
       return NextResponse.json({ error: 'Member not found' }, { status: 404 });
     }
 
-    const insert = db.prepare(`
+    const res = await execute(`
       INSERT INTO checklists (title, category, is_completed, is_personal, created_by, created_at)
       VALUES (?, ?, 0, ?, ?, CURRENT_TIMESTAMP)
-    `);
-    const res = insert.run(title.trim(), category.trim(), isPersonalInt, cleanMemberId);
-    const newId = Number(res.lastInsertRowid);
+    `, [title.trim(), category.trim(), isPersonalInt, cleanMemberId]);
 
-    const item = db.prepare(`
+    const newId = res.lastInsertRowid;
+
+    const item = await queryOne(`
       SELECT c.id, c.title, c.category, c.is_completed, c.is_personal, c.created_by, c.completed_by,
              c.created_at, c.completed_at,
              m.name as created_by_name
       FROM checklists c
       JOIN members m ON c.created_by = m.id
       WHERE c.id = ?
-    `).get(newId);
+    `, [newId]);
 
     return NextResponse.json({ success: true, item });
   } catch (error: any) {
@@ -91,28 +89,27 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
     }
 
-    const cleanMemberId = memberId.trim().toUpperCase();
-    const db = getDb();
+    const cleanMemberId = memberId.trim();
 
     if (is_completed) {
-      db.prepare(`
+      await execute(`
         UPDATE checklists
         SET is_completed = 1,
             completed_by = ?,
             completed_at = CURRENT_TIMESTAMP
         WHERE id = ?
-      `).run(cleanMemberId, id);
+      `, [cleanMemberId, id]);
     } else {
-      db.prepare(`
+      await execute(`
         UPDATE checklists
         SET is_completed = 0,
             completed_by = NULL,
             completed_at = NULL
         WHERE id = ?
-      `).run(id);
+      `, [id]);
     }
 
-    const updated = db.prepare(`
+    const updated = await queryOne(`
       SELECT c.id, c.title, c.category, c.is_completed, c.is_personal, c.created_by, c.completed_by,
              c.created_at, c.completed_at,
              m1.name as created_by_name,
@@ -121,7 +118,7 @@ export async function PATCH(req: NextRequest) {
       JOIN members m1 ON c.created_by = m1.id
       LEFT JOIN members m2 ON c.completed_by = m2.id
       WHERE c.id = ?
-    `).get(id);
+    `, [id]);
 
     return NextResponse.json({ success: true, item: updated });
   } catch (error: any) {
@@ -139,8 +136,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Item ID required' }, { status: 400 });
     }
 
-    const db = getDb();
-    db.prepare('DELETE FROM checklists WHERE id = ?').run(id);
+    await execute('DELETE FROM checklists WHERE id = ?', [id]);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

@@ -1,9 +1,6 @@
 import path from 'path';
 import fs from 'fs';
-import { createRequire } from 'module';
-
-const nodeRequire = createRequire(import.meta.url);
-const { DatabaseSync } = nodeRequire('node:sqlite');
+import { createClient, Client } from '@libsql/client';
 
 export interface Member {
   id: string;
@@ -94,113 +91,153 @@ export function getUploadsDir(): string {
   return dir;
 }
 
-// Global cached instance for dev HMR
-let dbInstance: any = null;
+let clientInstance: Client | null = null;
+let initPromise: Promise<void> | null = null;
 
-export function getDb() {
-  if (dbInstance) {
-    return dbInstance;
+export function getDb(): Client {
+  if (clientInstance) {
+    return clientInstance;
   }
 
-  const dataDir = getDataDir();
-  const dbPath = path.join(dataDir, 'nidar.sqlite');
-  const db = new DatabaseSync(dbPath);
+  // Connect to Turso Cloud SQLite if credentials exist; otherwise fallback to local SQLite file
+  const tursoUrl = process.env.TURSO_DATABASE_URL;
+  const tursoAuthToken = process.env.TURSO_AUTH_TOKEN;
 
-  // Enable WAL mode for performance and concurrent reads
-  db.exec('PRAGMA journal_mode = WAL;');
-  db.exec('PRAGMA foreign_keys = ON;');
-
-  // Initialize tables
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS members (
-      id TEXT PRIMARY KEY,
-      username TEXT UNIQUE,
-      name TEXT NOT NULL,
-      role TEXT NOT NULL,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      last_active_at TEXT DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS categories (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT UNIQUE NOT NULL,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS progress_logs (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      member_id TEXT NOT NULL REFERENCES members(id),
-      content TEXT NOT NULL,
-      blockers TEXT,
-      category TEXT DEFAULT 'General',
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      updated_at TEXT
-    );
-
-    CREATE TABLE IF NOT EXISTS log_attachments (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      log_id INTEGER NOT NULL REFERENCES progress_logs(id) ON DELETE CASCADE,
-      file_url TEXT NOT NULL,
-      file_name TEXT NOT NULL,
-      file_size INTEGER,
-      mime_type TEXT,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS log_reactions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      log_id INTEGER NOT NULL REFERENCES progress_logs(id) ON DELETE CASCADE,
-      member_id TEXT NOT NULL REFERENCES members(id),
-      reaction_type TEXT DEFAULT 'like',
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE(log_id, member_id, reaction_type)
-    );
-
-    CREATE TABLE IF NOT EXISTS checklists (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      category TEXT DEFAULT 'General',
-      is_completed INTEGER DEFAULT 0,
-      is_personal INTEGER DEFAULT 0,
-      created_by TEXT NOT NULL REFERENCES members(id),
-      completed_by TEXT REFERENCES members(id),
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      completed_at TEXT
-    );
-
-    CREATE TABLE IF NOT EXISTS meetings (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      agenda TEXT,
-      scheduled_at TEXT NOT NULL,
-      duration_minutes INTEGER DEFAULT 30,
-      meeting_url TEXT,
-      created_by TEXT NOT NULL REFERENCES members(id),
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
-
-  // Run migration safely for existing tables that might not have is_personal
-  try {
-    db.exec(`ALTER TABLE checklists ADD COLUMN is_personal INTEGER DEFAULT 0;`);
-  } catch (e) {
-    // Column already exists, ignore
+  if (tursoUrl) {
+    clientInstance = createClient({
+      url: tursoUrl,
+      authToken: tursoAuthToken,
+    });
+  } else {
+    const dataDir = getDataDir();
+    const dbPath = path.join(dataDir, 'nidar.sqlite');
+    clientInstance = createClient({
+      url: `file:${dbPath}`,
+    });
   }
 
-  // Run migration safely to add username to members
-  try {
-    db.exec(`ALTER TABLE members ADD COLUMN username TEXT;`);
-  } catch (e) {
-    // Column already exists, ignore
+  return clientInstance;
+}
+
+export async function ensureDbInitialized(): Promise<void> {
+  if (initPromise) {
+    return initPromise;
   }
 
-  // Populate username for any existing legacy members
-  try {
-    db.exec(`UPDATE members SET username = LOWER(REPLACE(name, ' ', '')) WHERE username IS NULL OR username = '';`);
-  } catch (e) {
-    // Ignore
-  }
+  initPromise = (async () => {
+    const db = getDb();
 
-  dbInstance = db;
-  return db;
+    // Create all required tables
+    await db.executeMultiple(`
+      CREATE TABLE IF NOT EXISTS members (
+        id TEXT PRIMARY KEY,
+        username TEXT UNIQUE,
+        name TEXT NOT NULL,
+        role TEXT NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        last_active_at TEXT DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS progress_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        member_id TEXT NOT NULL REFERENCES members(id),
+        content TEXT NOT NULL,
+        blockers TEXT,
+        category TEXT DEFAULT 'General',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS log_attachments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        log_id INTEGER NOT NULL REFERENCES progress_logs(id) ON DELETE CASCADE,
+        file_url TEXT NOT NULL,
+        file_name TEXT NOT NULL,
+        file_size INTEGER,
+        mime_type TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS log_reactions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        log_id INTEGER NOT NULL REFERENCES progress_logs(id) ON DELETE CASCADE,
+        member_id TEXT NOT NULL REFERENCES members(id),
+        reaction_type TEXT DEFAULT 'like',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(log_id, member_id, reaction_type)
+      );
+
+      CREATE TABLE IF NOT EXISTS checklists (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        category TEXT DEFAULT 'General',
+        is_completed INTEGER DEFAULT 0,
+        is_personal INTEGER DEFAULT 0,
+        created_by TEXT NOT NULL REFERENCES members(id),
+        completed_by TEXT REFERENCES members(id),
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        completed_at TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS meetings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        agenda TEXT,
+        scheduled_at TEXT NOT NULL,
+        duration_minutes INTEGER DEFAULT 30,
+        meeting_url TEXT,
+        created_by TEXT NOT NULL REFERENCES members(id),
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Safe migrations for backwards-compatibility
+    try {
+      await db.execute(`ALTER TABLE checklists ADD COLUMN is_personal INTEGER DEFAULT 0;`);
+    } catch (e) { /* column exists */ }
+
+    try {
+      await db.execute(`ALTER TABLE members ADD COLUMN username TEXT;`);
+    } catch (e) { /* column exists */ }
+
+    try {
+      await db.execute(`UPDATE members SET username = LOWER(REPLACE(name, ' ', '')) WHERE username IS NULL OR username = '';`);
+    } catch (e) { /* ignore */ }
+  })();
+
+  return initPromise;
+}
+
+// Helper: Query multiple rows
+export async function queryAll<T = any>(sql: string, args: any[] = []): Promise<T[]> {
+  await ensureDbInitialized();
+  const db = getDb();
+  const res = await db.execute({ sql, args });
+  return (res.rows as unknown) as T[];
+}
+
+// Helper: Query a single row or null
+export async function queryOne<T = any>(sql: string, args: any[] = []): Promise<T | null> {
+  await ensureDbInitialized();
+  const db = getDb();
+  const res = await db.execute({ sql, args });
+  if (res.rows.length === 0) return null;
+  return (res.rows[0] as unknown) as T;
+}
+
+// Helper: Execute INSERT/UPDATE/DELETE
+export async function execute(sql: string, args: any[] = []): Promise<{ lastInsertRowid: number; rowsAffected: number }> {
+  await ensureDbInitialized();
+  const db = getDb();
+  const res = await db.execute({ sql, args });
+  return {
+    lastInsertRowid: Number(res.lastInsertRowid ?? 0),
+    rowsAffected: res.rowsAffected,
+  };
 }

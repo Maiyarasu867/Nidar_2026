@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { queryAll, queryOne, execute } from '@/lib/db';
 
-function generateMemberId(db: any): string {
+async function generateMemberId(): Promise<string> {
   let id = '';
   let exists = true;
   let attempts = 0;
@@ -10,14 +10,13 @@ function generateMemberId(db: any): string {
     attempts++;
     const randomNum = Math.floor(100 + Math.random() * 900); // 3-digit number 100-999
     id = `NDR-${randomNum}`;
-    const check = db.prepare('SELECT id FROM members WHERE id = ?').get(id);
+    const check = await queryOne('SELECT id FROM members WHERE id = ?', [id]);
     if (!check) {
       exists = false;
     }
   }
 
   if (exists) {
-    // Fallback if dense
     id = `NDR-${Date.now().toString().slice(-4)}`;
   }
 
@@ -26,13 +25,12 @@ function generateMemberId(db: any): string {
 
 export async function GET() {
   try {
-    const db = getDb();
-    const members = db.prepare(`
+    const members = await queryAll(`
       SELECT id, username, name, role, created_at, last_active_at,
              (SELECT COUNT(*) FROM progress_logs WHERE member_id = members.id) as log_count
       FROM members 
       ORDER BY last_active_at DESC
-    `).all();
+    `);
 
     return NextResponse.json({ members });
   } catch (error: any) {
@@ -45,7 +43,6 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { action, username, name, role, passcode, memberId } = body;
-    const db = getDb();
 
     if (action === 'register') {
       const requiredPasscode = process.env.PROJECT_PASSCODE || 'NIDAR2026';
@@ -75,7 +72,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Check if username is already taken
-      const existing = db.prepare('SELECT id FROM members WHERE LOWER(username) = ? OR LOWER(id) = ?').get(cleanUsername, cleanUsername);
+      const existing = await queryOne('SELECT id FROM members WHERE LOWER(username) = ? OR LOWER(id) = ?', [cleanUsername, cleanUsername]);
       if (existing) {
         return NextResponse.json(
           { error: `Username "@${cleanUsername}" is already taken. Please choose another username.` },
@@ -83,13 +80,13 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const id = generateMemberId(db);
-      db.prepare(`
+      const id = await generateMemberId();
+      await execute(`
         INSERT INTO members (id, username, name, role, created_at, last_active_at)
         VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      `).run(id, cleanUsername, name.trim(), role.trim());
+      `, [id, cleanUsername, name.trim(), role.trim()]);
 
-      const member = db.prepare('SELECT id, username, name, role, created_at, last_active_at FROM members WHERE id = ?').get(id);
+      const member = await queryOne('SELECT id, username, name, role, created_at, last_active_at FROM members WHERE id = ?', [id]);
       return NextResponse.json({ success: true, member });
     }
 
@@ -101,11 +98,11 @@ export async function POST(req: NextRequest) {
 
       const cleanInput = loginInput.toLowerCase();
       // Match by username (case-insensitive), or ID, or full name
-      const member = db.prepare(`
+      const member = await queryOne(`
         SELECT id, username, name, role, created_at, last_active_at 
         FROM members 
         WHERE LOWER(username) = ? OR LOWER(id) = ? OR LOWER(name) = ?
-      `).get(cleanInput, cleanInput, cleanInput);
+      `, [cleanInput, cleanInput, cleanInput]);
 
       if (!member) {
         return NextResponse.json(
@@ -115,8 +112,8 @@ export async function POST(req: NextRequest) {
       }
 
       // Update last active
-      db.prepare('UPDATE members SET last_active_at = CURRENT_TIMESTAMP WHERE id = ?').run(member.id);
-      const updatedMember = db.prepare('SELECT id, username, name, role, created_at, last_active_at FROM members WHERE id = ?').get(member.id);
+      await execute('UPDATE members SET last_active_at = CURRENT_TIMESTAMP WHERE id = ?', [member.id]);
+      const updatedMember = await queryOne('SELECT id, username, name, role, created_at, last_active_at FROM members WHERE id = ?', [member.id]);
 
       return NextResponse.json({ success: true, member: updatedMember });
     }
