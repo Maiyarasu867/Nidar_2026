@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Member, Meeting } from '@/lib/db';
+import { formatISTDate, formatISTTime, isISTToday } from '@/lib/dateUtils';
 import { CalendarIcon, ClockIcon, PlusIcon, ExternalLinkIcon, TrashIcon, AlertCircleIcon } from './Icons';
 
 interface MeetingsTabProps {
@@ -219,8 +220,7 @@ export function MeetingsTab({
           </div>
         ) : (
           upcomingMeetings.map((m) => {
-            const meetingDate = new Date(m.scheduled_at);
-            const isToday = meetingDate.toDateString() === new Date().toDateString();
+            const isToday = isISTToday(m.scheduled_at);
 
             return (
               <div
@@ -242,8 +242,8 @@ export function MeetingsTab({
                   <p className="text-[11px] sm:text-xs text-neutral-400 flex flex-wrap items-center gap-1.5">
                     <ClockIcon className="w-3.5 h-3.5 text-neutral-500 flex-shrink-0" />
                     <span>
-                      {meetingDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} at{' '}
-                      {meetingDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })} ({m.duration_minutes} min)
+                      {formatISTDate(m.scheduled_at)} at{' '}
+                      {formatISTTime(m.scheduled_at)} IST ({m.duration_minutes} min)
                     </span>
                     <span>• by {m.created_by_name || m.created_by}</span>
                   </p>
@@ -314,7 +314,7 @@ export function MeetingsTab({
                 <div>
                   <span className="font-medium text-neutral-300 mr-2">{m.title}</span>
                   <span className="text-[11px] text-neutral-500">
-                    {new Date(m.scheduled_at).toLocaleDateString()}
+                    {formatISTDate(m.scheduled_at)}
                   </span>
                 </div>
                 <button

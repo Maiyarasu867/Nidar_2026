@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Member } from '@/lib/db';
+import { isISTToday } from '@/lib/dateUtils';
 import { UsersIcon, XIcon, UserIcon } from './Icons';
 
 interface TeamRosterModalProps {
@@ -38,8 +39,7 @@ export function TeamRosterModal({ isOpen, members, onClose }: TeamRosterModalPro
             <p className="text-xs text-neutral-500 text-center py-6">No members registered yet.</p>
           ) : (
             members.map((m) => {
-              const lastActive = m.last_active_at ? new Date(m.last_active_at) : null;
-              const isToday = lastActive && lastActive.toDateString() === new Date().toDateString();
+              const isToday = isISTToday(m.last_active_at);
 
               return (
                 <div

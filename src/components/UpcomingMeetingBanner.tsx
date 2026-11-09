@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { Meeting } from '@/lib/db';
+import { formatISTDate, formatISTTime } from '@/lib/dateUtils';
 import { CalendarIcon, ExternalLinkIcon, ClockIcon } from './Icons';
 
 interface UpcomingMeetingBannerProps {
@@ -68,8 +69,8 @@ export function UpcomingMeetingBanner({ meetings }: UpcomingMeetingBannerProps) 
           <p className="text-[11px] sm:text-xs text-neutral-400 flex flex-wrap items-center gap-1.5 mt-0.5">
             <ClockIcon className="w-3.5 h-3.5 text-neutral-500 flex-shrink-0" />
             <span>
-              {meetingDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} at{' '}
-              {meetingDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })} ({nextMeeting.duration_minutes}m)
+              {formatISTDate(nextMeeting.scheduled_at)} at{' '}
+              {formatISTTime(nextMeeting.scheduled_at)} IST ({nextMeeting.duration_minutes}m)
             </span>
             {nextMeeting.created_by_name && (
               <span>• by {nextMeeting.created_by_name}</span>

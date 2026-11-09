@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { queryOne, queryAll, execute } from '@/lib/db';
+import { isISTToday } from '@/lib/dateUtils';
 
 export async function PATCH(
   req: NextRequest,
@@ -41,14 +42,10 @@ export async function PATCH(
       return NextResponse.json({ error: 'You can only edit your own progress logs' }, { status: 403 });
     }
 
-    // Rule: Log can only be edited within that day (same calendar date)
-    const logDate = new Date(log.created_at);
-    const today = new Date();
-    const isSameDay = logDate.toDateString() === today.toDateString();
-
-    if (!isSameDay) {
+    // Rule: Log can only be edited within that day (same Indian Standard Time calendar date)
+    if (!isISTToday(log.created_at)) {
       return NextResponse.json(
-        { error: 'Logs can only be edited on the same day they were posted.' },
+        { error: 'Logs can only be edited on the same day they were posted (IST).' },
         { status: 403 }
       );
     }

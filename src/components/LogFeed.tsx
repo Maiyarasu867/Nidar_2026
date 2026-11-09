@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Member, ProgressLog } from '@/lib/db';
+import { formatISTTime, formatISTDate, getISTDateLabel, isISTToday } from '@/lib/dateUtils';
 import {
   SearchIcon,
   CopyIcon,
@@ -73,28 +74,12 @@ export function LogFeed({
     });
   }, [logs, selectedMember, selectedCategory, searchQuery]);
 
-  // Group logs by date string
+  // Group logs by Indian Standard Time (IST) date string
   const groupedLogs = useMemo(() => {
     const groups: { [dateLabel: string]: ProgressLog[] } = {};
 
-    const todayStr = new Date().toDateString();
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toDateString();
-
     filteredLogs.forEach((log) => {
-      const d = new Date(log.created_at);
-      const dStr = d.toDateString();
-      let label = d.toLocaleDateString(undefined, {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      });
-
-      if (dStr === todayStr) label = 'Today';
-      else if (dStr === yesterdayStr) label = 'Yesterday';
-
+      const label = getISTDateLabel(log.created_at);
       if (!groups[label]) groups[label] = [];
       groups[label].push(log);
     });
@@ -162,11 +147,11 @@ export function LogFeed({
       return;
     }
 
-    let summary = `📋 *NIDAR Project Progress Update — ${new Date().toLocaleDateString()}*\n\n`;
+    let summary = `📋 *NIDAR Project Progress Update — ${formatISTDate(new Date())} (IST)*\n\n`;
     todayLogs.forEach((l) => {
       summary += `👤 *${l.member_name}* (@${l.member_username || l.member_id}, ${l.member_role})\n`;
       summary += `• Category: [${l.category}]\n`;
-      summary += `• Progress: ${l.content}\n`;
+      summary += `• Progress (${formatISTTime(l.created_at)} IST): ${l.content}\n`;
       if (l.blockers) {
         summary += `• ⚠️ Blocker: ${l.blockers}\n`;
       }
@@ -271,7 +256,7 @@ export function LogFeed({
             <div className="space-y-3">
               {dateLogs.map((log) => {
                 const isOwn = log.member_id === currentMember.id;
-                const isToday = new Date(log.created_at).toDateString() === new Date().toDateString();
+                const isToday = isISTToday(log.created_at);
                 const canEdit = isOwn && isToday;
                 const isEditing = editingLogId === log.id;
 
@@ -279,10 +264,7 @@ export function LogFeed({
                 const reactionCount = log.reactions?.length || 0;
                 const reactorNames = log.reactions?.map((r) => r.member_name).join(', ') || '';
 
-                const timeStr = new Date(log.created_at).toLocaleTimeString(undefined, {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                });
+                const timeStr = formatISTTime(log.created_at);
 
                 return (
                   <article
@@ -446,7 +428,7 @@ export function LogFeed({
                                 </span>
                               </div>
                               <span className="text-[11px] text-neutral-400 block mt-0.5">
-                                {timeStr} • <span className="text-blue-400 font-medium">{log.category}</span>
+                                {timeStr} IST • <span className="text-blue-400 font-medium">{log.category}</span>
                                 {log.updated_at && (
                                   <span className="text-[10px] text-neutral-500 italic ml-1.5 font-normal">
                                     (edited)
