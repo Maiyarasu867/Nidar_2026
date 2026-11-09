@@ -82,43 +82,43 @@ export function ChecklistsTab({
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-5 max-w-4xl mx-auto">
       
       {/* Switch between Team Checklist and Personal Checklist */}
-      <div className="flex rounded-2xl bg-neutral-900 border border-neutral-800 p-1.5 text-xs sm:text-sm font-medium">
+      <div className="flex rounded-2xl bg-neutral-900 border border-neutral-800 p-1 text-xs sm:text-sm font-medium">
         <button
           type="button"
           onClick={() => { setChecklistType('team'); setFilter('all'); }}
-          className={`flex-1 py-2 rounded-xl transition flex items-center justify-center space-x-2 ${
+          className={`flex-1 py-2 px-2 rounded-xl transition flex items-center justify-center space-x-1.5 ${
             checklistType === 'team'
               ? 'bg-neutral-800 text-white shadow-sm font-semibold'
               : 'text-neutral-400 hover:text-neutral-200'
           }`}
         >
-          <UsersIcon className="w-4 h-4 text-blue-400" />
-          <span>Team Checklist ({teamItems.length})</span>
+          <UsersIcon className="w-4 h-4 text-blue-400 flex-shrink-0" />
+          <span>Team <span className="hidden xs:inline">Tasks</span> ({teamItems.length})</span>
         </button>
 
         <button
           type="button"
           onClick={() => { setChecklistType('personal'); setFilter('all'); }}
-          className={`flex-1 py-2 rounded-xl transition flex items-center justify-center space-x-2 ${
+          className={`flex-1 py-2 px-2 rounded-xl transition flex items-center justify-center space-x-1.5 ${
             checklistType === 'personal'
               ? 'bg-neutral-800 text-white shadow-sm font-semibold'
               : 'text-neutral-400 hover:text-neutral-200'
           }`}
         >
-          <UserIcon className="w-4 h-4 text-emerald-400" />
-          <span>My Personal Checklist ({personalItems.length})</span>
+          <UserIcon className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+          <span>Personal ({personalItems.length})</span>
         </button>
       </div>
 
       {/* Progress Card */}
-      <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 shadow-sm text-neutral-100">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+      <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 sm:p-5 shadow-sm text-neutral-100">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3">
           <div>
-            <h2 className="text-base font-bold text-white flex items-center space-x-2">
-              <CheckCircleIcon className="w-5 h-5 text-emerald-400" />
+            <h2 className="text-sm sm:text-base font-bold text-white flex items-center space-x-2">
+              <CheckCircleIcon className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
               <span>
                 {checklistType === 'team' ? 'Project Team Checklist' : 'My Personal Checklist'}
               </span>
@@ -147,27 +147,27 @@ export function ChecklistsTab({
       </div>
 
       {/* Add New Task Form */}
-      <form onSubmit={handleAdd} className="bg-neutral-900/60 border border-neutral-800 p-3.5 rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+      <form onSubmit={handleAdd} className="bg-neutral-900/60 border border-neutral-800 p-3 sm:p-3.5 rounded-2xl flex flex-col gap-2.5">
         <input
           type="text"
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
           placeholder={checklistType === 'team' ? "Add a new team sprint task..." : "Add a personal to-do item..."}
           required
-          className="w-full sm:flex-1 px-3.5 py-2 bg-neutral-950 border border-neutral-800 rounded-xl text-neutral-200 placeholder:text-neutral-600 text-xs focus:outline-none focus:border-blue-500"
+          className="w-full px-3.5 py-2.5 bg-neutral-950 border border-neutral-800 rounded-xl text-neutral-200 placeholder:text-neutral-600 text-xs focus:outline-none focus:border-blue-500"
         />
 
-        <div className="flex items-center space-x-2 w-full sm:w-auto">
+        <div className="flex items-center gap-2">
           {/* Category Dropdown or Custom Input */}
           {isAddingCategory ? (
-            <div className="flex items-center space-x-1">
+            <div className="flex-1 flex items-center space-x-1">
               <input
                 type="text"
                 value={newCategoryInput}
                 onChange={(e) => setNewCategoryInput(e.target.value)}
                 placeholder="New tag..."
                 autoFocus
-                className="bg-neutral-950 border border-blue-500 text-white text-xs rounded-xl px-2 py-1.5 focus:outline-none w-28"
+                className="w-full bg-neutral-950 border border-blue-500 text-white text-xs rounded-xl px-2.5 py-2 focus:outline-none"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
@@ -180,20 +180,20 @@ export function ChecklistsTab({
               <button
                 type="button"
                 onClick={handleCreateCategory}
-                className="p-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition"
+                className="p-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition flex-shrink-0"
               >
                 <CheckIcon className="w-3.5 h-3.5" />
               </button>
               <button
                 type="button"
                 onClick={() => setIsAddingCategory(false)}
-                className="p-1.5 text-neutral-400 hover:text-white rounded-lg transition"
+                className="p-2 text-neutral-400 hover:text-white rounded-xl transition flex-shrink-0"
               >
                 <XIcon className="w-3.5 h-3.5" />
               </button>
             </div>
           ) : (
-            <div className="flex items-center space-x-1">
+            <div className="flex-1 min-w-[110px]">
               <select
                 value={newCategory}
                 onChange={(e) => {
@@ -203,7 +203,7 @@ export function ChecklistsTab({
                     setNewCategory(e.target.value);
                   }
                 }}
-                className="bg-neutral-950 border border-neutral-800 text-neutral-300 text-xs rounded-xl px-2.5 py-2 focus:outline-none focus:border-blue-500"
+                className="w-full bg-neutral-950 border border-neutral-800 text-neutral-300 text-xs rounded-xl px-2.5 py-2 focus:outline-none focus:border-blue-500 truncate"
               >
                 {categories.length === 0 && <option value="General">General</option>}
                 {categories.map((c) => (
@@ -217,10 +217,10 @@ export function ChecklistsTab({
           <button
             type="submit"
             disabled={loading || !newTitle.trim()}
-            className="inline-flex items-center space-x-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white rounded-xl text-xs font-semibold shadow-sm transition flex-shrink-0"
+            className="flex-1 sm:flex-none inline-flex items-center justify-center space-x-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white rounded-xl text-xs font-semibold shadow-sm transition flex-shrink-0"
           >
             <PlusIcon className="w-3.5 h-3.5" />
-            <span>Add to {checklistType === 'team' ? 'Team' : 'Personal'}</span>
+            <span>Add Task</span>
           </button>
         </div>
       </form>
@@ -271,13 +271,13 @@ export function ChecklistsTab({
             return (
               <div
                 key={item.id}
-                className={`group flex items-start justify-between p-3.5 rounded-xl border transition ${
+                className={`group flex items-start justify-between p-3 sm:p-3.5 rounded-xl border transition gap-2 ${
                   isCompleted
                     ? 'bg-neutral-950/40 border-neutral-800/60 text-neutral-400'
                     : 'bg-neutral-900 border-neutral-800 text-neutral-100 hover:border-neutral-700'
                 }`}
               >
-                <div className="flex items-start space-x-3 flex-1">
+                <div className="flex items-start space-x-2.5 sm:space-x-3 flex-1 min-w-0">
                   {/* Custom Checkbox button */}
                   <button
                     type="button"
@@ -292,9 +292,9 @@ export function ChecklistsTab({
                     {isCompleted && <CheckIcon className="w-3.5 h-3.5" />}
                   </button>
 
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <span className={`text-xs sm:text-sm font-medium ${isCompleted ? 'line-through text-neutral-500' : 'text-white'}`}>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className={`text-xs sm:text-sm font-medium break-words ${isCompleted ? 'line-through text-neutral-500' : 'text-white'}`}>
                         {item.title}
                       </span>
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-400 font-mono">
@@ -302,7 +302,7 @@ export function ChecklistsTab({
                       </span>
                     </div>
 
-                    <div className="text-[11px] text-neutral-500 mt-1 flex flex-wrap items-center gap-x-2">
+                    <div className="text-[10px] sm:text-[11px] text-neutral-500 mt-1 flex flex-wrap items-center gap-x-2">
                       {checklistType === 'team' && (
                         <span>Added by {item.created_by_name || item.created_by}</span>
                       )}
@@ -315,11 +315,11 @@ export function ChecklistsTab({
                   </div>
                 </div>
 
-                {/* Delete button */}
+                {/* Delete button (Visible on mobile without hover) */}
                 <button
                   type="button"
                   onClick={() => onDeleteItem(item.id)}
-                  className="opacity-0 group-hover:opacity-100 p-1.5 text-neutral-500 hover:text-red-400 hover:bg-neutral-800 rounded-lg transition"
+                  className="p-1.5 text-neutral-500 hover:text-red-400 hover:bg-neutral-800 rounded-lg transition flex-shrink-0"
                   title="Remove task"
                 >
                   <TrashIcon className="w-3.5 h-3.5" />

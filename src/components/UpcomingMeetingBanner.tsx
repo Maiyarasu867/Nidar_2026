@@ -6,10 +6,10 @@ import { CalendarIcon, ExternalLinkIcon, ClockIcon } from './Icons';
 
 interface UpcomingMeetingBannerProps {
   meetings: Meeting[];
-  onOpenMeetingsTab: () => void;
+  onOpenMeetingsTab?: () => void;
 }
 
-export function UpcomingMeetingBanner({ meetings, onOpenMeetingsTab }: UpcomingMeetingBannerProps) {
+export function UpcomingMeetingBanner({ meetings }: UpcomingMeetingBannerProps) {
   // Find next upcoming meeting
   const nextMeeting = useMemo(() => {
     const now = new Date();
@@ -51,22 +51,22 @@ export function UpcomingMeetingBanner({ meetings, onOpenMeetingsTab }: UpcomingM
   };
 
   return (
-    <div className="mb-6 p-4 rounded-xl bg-gradient-to-r from-blue-950/60 via-neutral-900 to-indigo-950/60 border border-blue-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-neutral-100 shadow-md">
-      <div className="flex items-start space-x-3">
-        <div className="p-2.5 rounded-lg bg-blue-500/20 text-blue-400 mt-0.5">
-          <CalendarIcon className="w-5 h-5" />
+    <div className="mb-6 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-blue-950/60 via-neutral-900 to-indigo-950/60 border border-blue-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-neutral-100 shadow-md">
+      <div className="flex items-start space-x-2.5 sm:space-x-3 flex-1 min-w-0">
+        <div className="p-2 sm:p-2.5 rounded-xl bg-blue-500/20 text-blue-400 mt-0.5 flex-shrink-0">
+          <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5" />
         </div>
-        <div>
+        <div className="flex-1 min-w-0">
           <div className="flex items-center space-x-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono">
+            <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono">
               Upcoming Sync • {timeUntilStr}
             </span>
           </div>
-          <h3 className="font-semibold text-white text-sm sm:text-base mt-1">
+          <h3 className="font-semibold text-white text-sm sm:text-base mt-1 break-words">
             {nextMeeting.title}
           </h3>
-          <p className="text-xs text-neutral-400 flex items-center space-x-1.5 mt-0.5">
-            <ClockIcon className="w-3.5 h-3.5 text-neutral-500" />
+          <p className="text-[11px] sm:text-xs text-neutral-400 flex flex-wrap items-center gap-1.5 mt-0.5">
+            <ClockIcon className="w-3.5 h-3.5 text-neutral-500 flex-shrink-0" />
             <span>
               {meetingDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} at{' '}
               {meetingDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })} ({nextMeeting.duration_minutes}m)
@@ -78,15 +78,15 @@ export function UpcomingMeetingBanner({ meetings, onOpenMeetingsTab }: UpcomingM
         </div>
       </div>
 
-      <div className="flex items-center space-x-2 self-end sm:self-center">
+      <div className="flex items-center justify-end space-x-2 w-full sm:w-auto pt-1 sm:pt-0 border-t border-neutral-800/60 sm:border-0">
         {nextMeeting.meeting_url && (
           <a
             href={nextMeeting.meeting_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium transition shadow-sm"
+            className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold transition shadow-sm"
           >
-            <span>Join Meeting</span>
+            <span>Join Call</span>
             <ExternalLinkIcon className="w-3.5 h-3.5" />
           </a>
         )}
@@ -94,7 +94,7 @@ export function UpcomingMeetingBanner({ meetings, onOpenMeetingsTab }: UpcomingM
           href={createGoogleCalendarUrl()}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center space-x-1 px-2.5 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded-lg text-xs font-medium border border-neutral-700 transition"
+          className="inline-flex items-center space-x-1 px-2.5 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded-xl text-xs font-medium border border-neutral-700 transition"
           title="Add to Google Calendar"
         >
           <CalendarIcon className="w-3.5 h-3.5" />

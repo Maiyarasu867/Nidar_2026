@@ -178,7 +178,7 @@ export function LogEntryForm({
         </div>
 
         {/* Dynamic Category Selector & Creation */}
-        <div className="flex items-center space-x-2 text-xs">
+        <div className="flex items-center flex-wrap gap-2 text-xs">
           <span className="text-neutral-400">Category:</span>
           
           {isAddingCategory ? (
@@ -189,7 +189,7 @@ export function LogEntryForm({
                 onChange={(e) => setNewCategoryInput(e.target.value)}
                 placeholder="New category..."
                 autoFocus
-                className="bg-neutral-950 border border-blue-500 text-white text-xs rounded-lg px-2.5 py-1 focus:outline-none w-32"
+                className="bg-neutral-950 border border-blue-500 text-white text-xs rounded-lg px-2.5 py-1 focus:outline-none w-28 sm:w-32"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
@@ -202,7 +202,7 @@ export function LogEntryForm({
               <button
                 type="button"
                 onClick={handleCreateCategory}
-                className="p-1 bg-blue-600 hover:bg-blue-500 text-white rounded-md transition"
+                className="p-1 bg-blue-600 hover:bg-blue-500 text-white rounded-md transition flex-shrink-0"
                 title="Save Category"
               >
                 <CheckIcon className="w-3.5 h-3.5" />
@@ -210,14 +210,14 @@ export function LogEntryForm({
               <button
                 type="button"
                 onClick={() => setIsAddingCategory(false)}
-                className="p-1 text-neutral-400 hover:text-white rounded-md transition"
+                className="p-1 text-neutral-400 hover:text-white rounded-md transition flex-shrink-0"
                 title="Cancel"
               >
                 <XIcon className="w-3.5 h-3.5" />
               </button>
             </div>
           ) : (
-            <div className="flex items-center space-x-1.5">
+            <div className="flex items-center space-x-1.5 max-w-full">
               <select
                 id="logCategory"
                 value={category}
@@ -228,7 +228,7 @@ export function LogEntryForm({
                     setCategory(e.target.value);
                   }
                 }}
-                className="bg-neutral-950 border border-neutral-800 text-neutral-200 text-xs rounded-lg px-2.5 py-1 focus:outline-none focus:border-blue-500"
+                className="bg-neutral-950 border border-neutral-800 text-neutral-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-blue-500 max-w-[170px] truncate"
               >
                 {categories.length === 0 && (
                   <option value="General">General</option>
@@ -242,7 +242,7 @@ export function LogEntryForm({
               <button
                 type="button"
                 onClick={() => setIsAddingCategory(true)}
-                className="p-1 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-md transition border border-neutral-800"
+                className="p-1.5 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-md transition border border-neutral-800 flex-shrink-0"
                 title="Add a custom category"
               >
                 <PlusIcon className="w-3.5 h-3.5" />
@@ -325,7 +325,7 @@ export function LogEntryForm({
         )}
 
         {/* Action Bar */}
-        <div className="flex items-center justify-between pt-2 border-t border-neutral-800/80">
+        <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2.5 border-t border-neutral-800/80">
           <div>
             <input
               ref={fileInputRef}
@@ -338,10 +338,10 @@ export function LogEntryForm({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-white text-xs font-medium border border-neutral-700 transition"
+              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-white text-xs font-medium border border-neutral-700 transition"
             >
-              <ImageIcon className="w-4 h-4 text-neutral-400" />
-              <span>Attach Screenshots ({files.length})</span>
+              <ImageIcon className="w-4 h-4 text-neutral-400 flex-shrink-0" />
+              <span>Screenshots ({files.length})</span>
             </button>
           </div>
 

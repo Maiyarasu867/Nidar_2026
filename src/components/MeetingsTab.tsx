@@ -19,7 +19,6 @@ interface MeetingsTabProps {
 
 export function MeetingsTab({
   meetings,
-  currentMember,
   onScheduleMeeting,
   onDeleteMeeting,
 }: MeetingsTabProps) {
@@ -79,9 +78,9 @@ export function MeetingsTab({
     <div className="space-y-6 max-w-4xl mx-auto">
       
       {/* Top Banner */}
-      <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-5 shadow-sm text-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 sm:p-5 shadow-sm text-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-base font-bold text-white flex items-center space-x-2">
+          <h2 className="text-sm sm:text-base font-bold text-white flex items-center space-x-2">
             <CalendarIcon className="w-5 h-5 text-blue-400" />
             <span>Team Meetings & Syncs</span>
           </h2>
@@ -102,7 +101,7 @@ export function MeetingsTab({
 
       {/* Schedule Meeting Form */}
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-neutral-900 border border-neutral-800 p-5 rounded-2xl space-y-4">
+        <form onSubmit={handleSubmit} className="bg-neutral-900 border border-neutral-800 p-4 sm:p-5 rounded-2xl space-y-4">
           <h3 className="text-sm font-semibold text-white">Schedule New Project Meeting</h3>
 
           {error && (
@@ -112,7 +111,7 @@ export function MeetingsTab({
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
             <div>
               <label htmlFor="meetingTitle" className="block text-xs font-medium text-neutral-300 mb-1">
                 Meeting Title *
@@ -122,7 +121,7 @@ export function MeetingsTab({
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Sensor Fusion Review"
+                placeholder="e.g. Architecture Review"
                 required
                 className="w-full px-3 py-2 bg-neutral-950 border border-neutral-800 rounded-xl text-white placeholder:text-neutral-600 text-xs focus:outline-none focus:border-blue-500"
               />
@@ -162,7 +161,7 @@ export function MeetingsTab({
 
             <div>
               <label htmlFor="meetingLink" className="block text-xs font-medium text-neutral-300 mb-1">
-                Meeting Link (Google Meet / Zoom / Discord)
+                Meeting Link (Google Meet / Zoom / Teams)
               </label>
               <input
                 id="meetingLink"
@@ -226,22 +225,22 @@ export function MeetingsTab({
             return (
               <div
                 key={m.id}
-                className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm hover:border-neutral-700 transition"
+                className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm hover:border-neutral-700 transition"
               >
-                <div className="space-y-1">
+                <div className="space-y-1 flex-1 min-w-0">
                   <div className="flex items-center space-x-2">
                     {isToday && (
-                      <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono">
+                      <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono flex-shrink-0">
                         Today
                       </span>
                     )}
-                    <h4 className="font-semibold text-white text-sm sm:text-base">
+                    <h4 className="font-semibold text-white text-sm sm:text-base break-words">
                       {m.title}
                     </h4>
                   </div>
 
-                  <p className="text-xs text-neutral-400 flex items-center space-x-2">
-                    <ClockIcon className="w-3.5 h-3.5 text-neutral-500" />
+                  <p className="text-[11px] sm:text-xs text-neutral-400 flex flex-wrap items-center gap-1.5">
+                    <ClockIcon className="w-3.5 h-3.5 text-neutral-500 flex-shrink-0" />
                     <span>
                       {meetingDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} at{' '}
                       {meetingDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })} ({m.duration_minutes} min)
@@ -250,13 +249,13 @@ export function MeetingsTab({
                   </p>
 
                   {m.agenda && (
-                    <p className="text-xs text-neutral-300 pt-1">
+                    <p className="text-xs text-neutral-300 pt-1 break-words">
                       {m.agenda}
                     </p>
                   )}
                 </div>
 
-                <div className="flex items-center space-x-2 self-start sm:self-center">
+                <div className="flex flex-wrap items-center gap-2 pt-2 sm:pt-0 border-t border-neutral-800/60 sm:border-0 justify-end sm:justify-start">
                   {m.meeting_url && (
                     <a
                       href={m.meeting_url}

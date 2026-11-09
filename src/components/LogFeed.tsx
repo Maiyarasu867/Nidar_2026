@@ -112,25 +112,25 @@ export function LogFeed({
   return (
     <div className="space-y-6">
       
-      {/* Search & Filter Toolbar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-neutral-900/60 border border-neutral-800/80 p-3 rounded-2xl">
-        <div className="flex-1 relative">
+      {/* Search & Filter Toolbar - Optimized for Mobile & Desktop */}
+      <div className="flex flex-col gap-2.5 bg-neutral-900/60 border border-neutral-800/80 p-3 rounded-2xl">
+        <div className="w-full relative">
           <SearchIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search progress logs, teammates, blockers..."
-            className="w-full pl-9 pr-3 py-1.5 bg-neutral-950 border border-neutral-800 rounded-xl text-neutral-200 placeholder:text-neutral-600 text-xs focus:outline-none focus:border-blue-500"
+            className="w-full pl-9 pr-3 py-2 bg-neutral-950 border border-neutral-800 rounded-xl text-neutral-200 placeholder:text-neutral-600 text-xs focus:outline-none focus:border-blue-500"
           />
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2">
           {/* Member filter */}
           <select
             value={selectedMember}
             onChange={(e) => setSelectedMember(e.target.value)}
-            className="bg-neutral-950 border border-neutral-800 text-neutral-300 text-xs rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-blue-500"
+            className="w-full sm:w-auto bg-neutral-950 border border-neutral-800 text-neutral-300 text-xs rounded-xl px-2.5 py-2 focus:outline-none focus:border-blue-500 truncate"
           >
             <option value="ALL">All Members</option>
             {members.map((m) => (
@@ -144,7 +144,7 @@ export function LogFeed({
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="bg-neutral-950 border border-neutral-800 text-neutral-300 text-xs rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-blue-500"
+            className="w-full sm:w-auto bg-neutral-950 border border-neutral-800 text-neutral-300 text-xs rounded-xl px-2.5 py-2 focus:outline-none focus:border-blue-500 truncate"
           >
             {categories.map((c) => (
               <option key={c} value={c}>{c === 'ALL' ? 'All Tags' : c}</option>
@@ -155,13 +155,13 @@ export function LogFeed({
           <button
             type="button"
             onClick={handleCopyStandup}
-            className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 rounded-xl text-xs font-medium border border-neutral-700 transition flex-shrink-0"
+            className="col-span-2 sm:col-span-1 w-full sm:w-auto inline-flex items-center justify-center space-x-1.5 px-3 py-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 rounded-xl text-xs font-medium border border-neutral-700 transition flex-shrink-0"
             title="Copy today's updates formatted for Slack/Discord/Email"
           >
             {copiedStandup ? (
               <>
                 <CheckIcon className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="text-emerald-400">Copied!</span>
+                <span className="text-emerald-400 font-medium">Copied to Clipboard!</span>
               </>
             ) : (
               <>
@@ -210,26 +210,26 @@ export function LogFeed({
                     className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 sm:p-5 shadow-sm text-neutral-100 hover:border-neutral-700/80 transition"
                   >
                     {/* Card Header */}
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center space-x-3">
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <div className="flex items-start space-x-2.5 sm:space-x-3 flex-1 min-w-0">
                         {/* Member Avatar / Initial */}
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-xs font-bold text-white shadow">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-xs font-bold text-white shadow flex-shrink-0 mt-0.5">
                           {log.member_name.charAt(0).toUpperCase()}
                         </div>
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <span className="font-semibold text-sm text-white">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-1.5 leading-tight">
+                            <span className="font-semibold text-sm text-white truncate max-w-[140px] sm:max-w-none">
                               {log.member_name}
                             </span>
-                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-neutral-800 text-neutral-300 font-medium">
+                            <span className="text-[10px] sm:text-[11px] px-1.5 py-0.5 rounded-full bg-neutral-800 text-neutral-300 font-medium">
                               {log.member_role}
                             </span>
                             <span className="text-[10px] text-neutral-500 font-mono hidden sm:inline">
                               {log.member_id}
                             </span>
                           </div>
-                          <span className="text-[11px] text-neutral-400">
-                            {timeStr} • <span className="text-blue-400">{log.category}</span>
+                          <span className="text-[11px] text-neutral-400 block mt-0.5">
+                            {timeStr} • <span className="text-blue-400 font-medium">{log.category}</span>
                           </span>
                         </div>
                       </div>
@@ -243,7 +243,7 @@ export function LogFeed({
                               onDeleteLog(log.id);
                             }
                           }}
-                          className="p-1.5 text-neutral-500 hover:text-red-400 hover:bg-neutral-800 rounded-lg transition"
+                          className="p-1.5 text-neutral-500 hover:text-red-400 hover:bg-neutral-800 rounded-lg transition flex-shrink-0"
                           title="Delete my update"
                         >
                           <TrashIcon className="w-3.5 h-3.5" />
@@ -259,13 +259,13 @@ export function LogFeed({
                           <span className="font-semibold text-amber-400 uppercase tracking-wider text-[10px] block">
                             Blocker / Needs Help
                           </span>
-                          <span className="mt-0.5 block">{log.blockers}</span>
+                          <span className="mt-0.5 block break-words">{log.blockers}</span>
                         </div>
                       </div>
                     )}
 
                     {/* Main Log Content */}
-                    <div className="text-sm text-neutral-200 whitespace-pre-wrap leading-relaxed">
+                    <div className="text-sm text-neutral-200 whitespace-pre-wrap leading-relaxed break-words">
                       {log.content}
                     </div>
 
@@ -274,10 +274,10 @@ export function LogFeed({
                       <div className="mt-4 pt-3 border-t border-neutral-800/70">
                         <span className="text-[11px] text-neutral-400 font-medium flex items-center space-x-1 mb-2">
                           <ImageIcon className="w-3.5 h-3.5 text-neutral-400" />
-                          <span>Screenshots ({log.attachments.length}) — Click to enlarge</span>
+                          <span>Screenshots ({log.attachments.length}) — Tap to enlarge</span>
                         </span>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                           {log.attachments.map((att) => (
                             <div
                               key={att.id}
@@ -296,7 +296,7 @@ export function LogFeed({
                                   <ZoomInIcon className="w-4 h-4" />
                                 </div>
                               </div>
-                              <span className="absolute bottom-1 left-1.5 right-1.5 text-[10px] text-neutral-300 bg-black/75 px-1.5 py-0.5 rounded truncate font-mono">
+                              <span className="absolute bottom-1 left-1 right-1 text-[9px] text-neutral-300 bg-black/80 px-1 py-0.5 rounded truncate font-mono">
                                 {att.file_name}
                               </span>
                             </div>
@@ -307,7 +307,7 @@ export function LogFeed({
 
                     {/* Card Footer: Reactions & Seen */}
                     <div className="mt-3.5 pt-2.5 border-t border-neutral-800/60 flex items-center justify-between text-xs text-neutral-400">
-                      <div className="flex items-center space-x-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <button
                           type="button"
                           onClick={() => onToggleReaction(log.id)}
@@ -323,7 +323,7 @@ export function LogFeed({
                         </button>
 
                         {reactionCount > 0 && (
-                          <span className="text-[11px] text-neutral-500 truncate max-w-[200px] sm:max-w-md">
+                          <span className="text-[11px] text-neutral-500 truncate max-w-[150px] xs:max-w-[200px] sm:max-w-md">
                             Seen by: {reactorNames}
                           </span>
                         )}

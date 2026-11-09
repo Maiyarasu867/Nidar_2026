@@ -44,25 +44,27 @@ export function TeamRosterModal({ isOpen, members, onClose }: TeamRosterModalPro
               return (
                 <div
                   key={m.id}
-                  className="flex items-center justify-between p-3 rounded-xl bg-neutral-950/50 border border-neutral-800/80"
+                  className="flex items-center justify-between p-3 rounded-xl bg-neutral-950/50 border border-neutral-800/80 gap-2.5"
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-700 to-indigo-700 flex items-center justify-center text-xs font-bold text-white">
+                  <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0 flex-1">
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr from-blue-700 to-indigo-700 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
                       {m.name.charAt(0).toUpperCase()}
                     </div>
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm font-semibold text-white">{m.name}</span>
-                        <span className="text-[11px] px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 font-mono">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-1.5 leading-tight">
+                        <span className="text-sm font-semibold text-white truncate max-w-[120px] sm:max-w-none">
+                          {m.name}
+                        </span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-300 font-mono flex-shrink-0">
                           {m.id}
                         </span>
                       </div>
-                      <span className="text-xs text-neutral-400">{m.role}</span>
+                      <span className="text-xs text-neutral-400 block truncate mt-0.5">{m.role}</span>
                     </div>
                   </div>
 
-                  <div className="text-right">
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                  <div className="text-right flex-shrink-0">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium inline-block ${
                       isToday
                         ? 'bg-emerald-500/20 text-emerald-400'
                         : 'bg-neutral-800 text-neutral-400'
