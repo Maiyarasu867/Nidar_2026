@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
     if (logIds.length > 0) {
       const placeholders = logIds.map(() => '?').join(',');
       const attachments = await queryAll(`
-        SELECT id, log_id, file_url, file_name, file_size, mime_type, created_at
+        SELECT id, log_id, file_url, file_name, file_size, mime_type, note, created_at
         FROM log_attachments
         WHERE log_id IN (${placeholders})
       `, logIds);
@@ -116,30 +116,34 @@ export async function POST(req: NextRequest) {
 
     // Process file attachments (screenshots)
     const files = formData.getAll('files') as File[];
+    const notes = formData.getAll('notes') as string[];
     const savedAttachments: any[] = [];
 
-    for (const file of files) {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
       if (!file || typeof file.arrayBuffer !== 'function' || file.size === 0) continue;
 
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
       const mimeType = file.type || 'image/png';
       const cleanOriginalName = path.basename(file.name || 'screenshot.png').replace(/[^a-zA-Z0-9._-]/g, '_');
+      const note = (notes[i] || '').trim() || null;
 
       // Store as Base64 Data URL for persistent in-database storage across cloud restarts
       const base64Data = buffer.toString('base64');
       const fileUrl = `data:${mimeType};base64,${base64Data}`;
 
       const attRes = await execute(`
-        INSERT INTO log_attachments (log_id, file_url, file_name, file_size, mime_type, created_at)
-        VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-      `, [logId, fileUrl, cleanOriginalName, file.size, mimeType]);
+        INSERT INTO log_attachments (log_id, file_url, file_name, file_size, mime_type, note, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      `, [logId, fileUrl, cleanOriginalName, file.size, mimeType, note]);
 
       savedAttachments.push({
         id: attRes.lastInsertRowid,
         log_id: logId,
         file_url: fileUrl,
         file_name: cleanOriginalName,
+        note,
         file_size: file.size,
         mime_type: mimeType,
       });

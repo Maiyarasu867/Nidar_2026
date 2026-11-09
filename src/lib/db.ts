@@ -16,6 +16,7 @@ export interface Attachment {
   log_id: number;
   file_url: string;
   file_name: string;
+  note?: string | null;
   file_size: number;
   mime_type: string;
   created_at: string;
@@ -39,6 +40,7 @@ export interface ProgressLog {
   blockers?: string | null;
   category: string;
   created_at: string;
+  updated_at?: string | null;
   attachments?: Attachment[];
   reactions?: Reaction[];
 }
@@ -159,6 +161,7 @@ export async function ensureDbInitialized(): Promise<void> {
         log_id INTEGER NOT NULL REFERENCES progress_logs(id) ON DELETE CASCADE,
         file_url TEXT NOT NULL,
         file_name TEXT NOT NULL,
+        note TEXT,
         file_size INTEGER,
         mime_type TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
@@ -204,6 +207,10 @@ export async function ensureDbInitialized(): Promise<void> {
 
     try {
       await db.execute(`ALTER TABLE members ADD COLUMN username TEXT;`);
+    } catch (e) { /* column exists */ }
+
+    try {
+      await db.execute(`ALTER TABLE log_attachments ADD COLUMN note TEXT;`);
     } catch (e) { /* column exists */ }
 
     try {

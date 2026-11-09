@@ -7,10 +7,11 @@ interface LightboxProps {
   isOpen: boolean;
   src: string | null;
   alt?: string;
+  note?: string | null;
   onClose: () => void;
 }
 
-export function Lightbox({ isOpen, src, alt, onClose }: LightboxProps) {
+export function Lightbox({ isOpen, src, alt, note, onClose }: LightboxProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [isZoomed, setIsZoomed] = useState(false);
 
@@ -63,11 +64,24 @@ export function Lightbox({ isOpen, src, alt, onClose }: LightboxProps) {
     >
       <div className="relative flex flex-col items-center justify-center p-2 bg-neutral-900/90 rounded-xl border border-neutral-700">
         {/* Top Control Bar */}
-        <div className="w-full flex items-center justify-between px-4 py-2 bg-neutral-950/80 rounded-t-lg border-b border-neutral-800 text-sm">
-          <span className="text-neutral-300 font-mono text-xs truncate max-w-[300px]">
-            {alt || 'Screenshot'}
-          </span>
-          <div className="flex items-center space-x-2">
+        <div className="w-full flex items-center justify-between px-4 py-2.5 bg-neutral-950/90 rounded-t-lg border-b border-neutral-800 text-sm gap-2">
+          <div className="flex flex-col min-w-0">
+            {note ? (
+              <>
+                <span className="text-sm font-semibold text-white truncate max-w-[260px] sm:max-w-lg">
+                  {note}
+                </span>
+                <span className="text-[11px] text-neutral-400 font-mono truncate max-w-[260px] sm:max-w-lg">
+                  {alt || 'Screenshot'}
+                </span>
+              </>
+            ) : (
+              <span className="text-neutral-300 font-mono text-xs truncate max-w-[260px] sm:max-w-lg">
+                {alt || 'Screenshot'}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center space-x-2 flex-shrink-0">
             <button
               type="button"
               onClick={() => setIsZoomed(!isZoomed)}

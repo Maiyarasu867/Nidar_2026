@@ -26,7 +26,7 @@ export default function Home() {
   const [, setDataLoading] = useState(false);
 
   // Modals & Lightbox
-  const [lightboxData, setLightboxData] = useState<{ src: string; alt: string } | null>(null);
+  const [lightboxData, setLightboxData] = useState<{ src: string; alt: string; note?: string | null } | null>(null);
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
 
   // Initial Auth Check from LocalStorage
@@ -137,6 +137,13 @@ export default function Home() {
       setCategories((prev) => [...prev, newLog.category]);
     }
     fetchData(); // refresh counts and activity
+  };
+
+  const handleUpdateLog = (updatedLog: ProgressLog) => {
+    setLogs((prev) => prev.map((l) => (l.id === updatedLog.id ? updatedLog : l)));
+    if (updatedLog.category && !categories.includes(updatedLog.category)) {
+      setCategories((prev) => [...prev, updatedLog.category]);
+    }
   };
 
   const handleDeleteLog = async (id: number) => {
@@ -295,8 +302,10 @@ export default function Home() {
                   logs={logs}
                   currentMember={currentMember}
                   members={members}
-                  onOpenLightbox={(src, alt) => setLightboxData({ src, alt })}
+                  categories={categories}
+                  onOpenLightbox={(src, alt, note) => setLightboxData({ src, alt, note })}
                   onDeleteLog={handleDeleteLog}
+                  onUpdateLog={handleUpdateLog}
                   onToggleReaction={handleToggleReaction}
                 />
               </div>
@@ -332,6 +341,7 @@ export default function Home() {
             isOpen={!!lightboxData}
             src={lightboxData?.src || null}
             alt={lightboxData?.alt || ''}
+            note={lightboxData?.note || null}
             onClose={() => setLightboxData(null)}
           />
 

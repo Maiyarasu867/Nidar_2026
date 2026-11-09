@@ -25,6 +25,7 @@ export function LogEntryForm({
   const [blockers, setBlockers] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [fileNotes, setFileNotes] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -92,8 +93,10 @@ export function LogEntryForm({
     if (validFiles.length === 0) return;
 
     const newPreviews = validFiles.map((f) => URL.createObjectURL(f));
+    const newNotes = validFiles.map(() => '');
     setFiles((prev) => [...prev, ...validFiles]);
     setPreviews((prev) => [...prev, ...newPreviews]);
+    setFileNotes((prev) => [...prev, ...newNotes]);
   };
 
   // Handle clipboard paste (Ctrl+V) for screenshots
@@ -121,6 +124,7 @@ export function LogEntryForm({
     URL.revokeObjectURL(previews[index]);
     setFiles((prev) => prev.filter((_, i) => i !== index));
     setPreviews((prev) => prev.filter((_, i) => i !== index));
+    setFileNotes((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -141,6 +145,9 @@ export function LogEntryForm({
       for (const file of files) {
         formData.append('files', file);
       }
+      for (const note of fileNotes) {
+        formData.append('notes', note);
+      }
 
       const res = await fetch('/api/logs', {
         method: 'POST',
@@ -159,6 +166,7 @@ export function LogEntryForm({
       previews.forEach((p) => URL.revokeObjectURL(p));
       setFiles([]);
       setPreviews([]);
+      setFileNotes([]);
       localStorage.removeItem(`nidar_draft_${currentMember.id}`);
 
       onLogCreated(data.log);
@@ -300,27 +308,57 @@ export function LogEntryForm({
           )}
         </div>
 
-        {/* Uploaded File Previews */}
+        {/* Uploaded File Previews with Note / Caption */}
         {previews.length > 0 && (
-          <div className="flex flex-wrap gap-2 pt-1">
-            {previews.map((preview, index) => (
-              <div key={index} className="relative group rounded-lg overflow-hidden border border-neutral-700 bg-neutral-950 w-20 h-20">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={preview}
-                  alt={`Upload preview ${index + 1}`}
-                  className="w-full h-full object-cover"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeFile(index)}
-                  className="absolute top-1 right-1 p-1 bg-black/70 hover:bg-red-600 text-white rounded-full transition"
-                  title="Remove image"
+          <div className="space-y-2 pt-1">
+            <span className="text-xs text-neutral-400 font-medium">
+              Screenshots ({previews.length}) — Add notes/captions for each image:
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {previews.map((preview, index) => (
+                <div
+                  key={index}
+                  className="flex items-center space-x-2.5 p-2 rounded-xl bg-neutral-950/80 border border-neutral-800"
                 >
-                  <XIcon className="w-3 h-3" />
-                </button>
-              </div>
-            ))}
+                  <div className="relative group rounded-lg overflow-hidden border border-neutral-700 bg-neutral-900 w-16 h-16 flex-shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={preview}
+                      alt={`Upload preview ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeFile(index)}
+                      className="absolute top-1 right-1 p-1 bg-black/70 hover:bg-red-600 text-white rounded-full transition"
+                      title="Remove image"
+                    >
+                      <XIcon className="w-3 h-3" />
+                    </button>
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <input
+                      type="text"
+                      value={fileNotes[index] || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setFileNotes((prev) => {
+                          const updated = [...prev];
+                          updated[index] = val;
+                          return updated;
+                        });
+                      }}
+                      placeholder="Note about this screenshot..."
+                      className="w-full px-2.5 py-1.5 bg-neutral-900 border border-neutral-800 rounded-lg text-white placeholder:text-neutral-600 text-xs focus:outline-none focus:border-blue-500"
+                    />
+                    <span className="text-[10px] text-neutral-500 truncate block mt-1">
+                      {files[index]?.name || `screenshot_${index + 1}.png`}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
