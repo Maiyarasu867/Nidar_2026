@@ -29,11 +29,10 @@ yarn-error.log*
 .env*.local
 
 # sqlite & uploaded files
-data/*.sqlite
-data/*.sqlite-journal
+data/*
+!data/.gitkeep
 uploads/*
 !uploads/.gitkeep
-
 
 # vercel
 .vercel
